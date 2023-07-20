@@ -43,7 +43,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     private UserMapper userMapper;
 
     @Resource
-    private StringRedisTemplate redisTemplate;
+    private StringRedisTemplate stringRedisTemplate;
 
     @Override
     public Result sendCode(String phone, HttpSession session) {
@@ -52,7 +52,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         // 生成验证码
         String code = RandomUtil.randomNumbers(6);
         // 保存验证码到redis
-        redisTemplate.opsForValue().set(LOGIN_CODE_KEY + phone, code, LOGIN_CODE_TTL, TimeUnit.MINUTES);
+        stringRedisTemplate.opsForValue().set(LOGIN_CODE_KEY + phone, code, LOGIN_CODE_TTL, TimeUnit.MINUTES);
         // 发送验证码
         log.info("发送验证码：{}", code);
         return Result.ok();
@@ -79,9 +79,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
         Map<String, Object> hashUser = BeanUtil.beanToMap(userDTO);
         // 3.2.3 保存到redis
-        redisTemplate.opsForHash().putAll(LOGIN_USER_KEY + token, hashUser);
+        stringRedisTemplate.opsForHash().putAll(LOGIN_USER_KEY + token, hashUser);
         // 3.2.4 设置过期时间
-        redisTemplate.expire(LOGIN_USER_KEY + token, LOGIN_USER_TTL, TimeUnit.MINUTES);
+        stringRedisTemplate.expire(LOGIN_USER_KEY + token, LOGIN_USER_TTL, TimeUnit.MINUTES);
         // 3.3 返回token
         return Result.ok();
     }
@@ -97,7 +97,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     private void checkCode(String code, String phone) {
         // 从redis中获取code
-        String cacheCode = redisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
+        String cacheCode = stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
         if (Objects.isNull(code)) {
             throw new BusinessException("验证码不能为空");
         }
