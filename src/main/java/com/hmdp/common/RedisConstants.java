@@ -4,9 +4,9 @@ public class RedisConstants {
     // 用于存储验证码的key
     public static final String LOGIN_CODE_KEY = "login:code:";
     // 验证码的有效期
-    public static final Long LOGIN_CODE_TTL = 2L;
+    public static final Long LOGIN_CODE_TTL = 120L;
     public static final String LOGIN_USER_KEY = "login:token:";
-    public static final Long LOGIN_USER_TTL = 36000L;
+    public static final Long LOGIN_USER_TTL = 1800L;
 
     public static final Long CACHE_NULL_TTL = 2L;
 

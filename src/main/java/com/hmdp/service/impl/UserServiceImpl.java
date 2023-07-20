@@ -1,6 +1,7 @@
 package com.hmdp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +54,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         // 生成验证码
         String code = RandomUtil.randomNumbers(6);
         // 保存验证码到redis
-        stringRedisTemplate.opsForValue().set(LOGIN_CODE_KEY + phone, code, LOGIN_CODE_TTL, TimeUnit.MINUTES);
+        stringRedisTemplate.opsForValue().set(LOGIN_CODE_KEY + phone, code, LOGIN_CODE_TTL, TimeUnit.SECONDS);
         // 发送验证码
         log.info("发送验证码：{}", code);
         return Result.ok();
@@ -77,13 +79,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         String token = UUID.randomUUID().toString(true);
         // 3.2.2 转成hash
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
-        Map<String, Object> hashUser = BeanUtil.beanToMap(userDTO);
+        Map<String, Object> hashUser = BeanUtil.beanToMap(userDTO, new HashMap<>(),
+                CopyOptions.create().
+                        ignoreNullValue().
+                        setFieldValueEditor((field, value) -> value.toString()));
         // 3.2.3 保存到redis
         stringRedisTemplate.opsForHash().putAll(LOGIN_USER_KEY + token, hashUser);
         // 3.2.4 设置过期时间
-        stringRedisTemplate.expire(LOGIN_USER_KEY + token, LOGIN_USER_TTL, TimeUnit.MINUTES);
+        stringRedisTemplate.expire(LOGIN_USER_KEY + token, LOGIN_USER_TTL, TimeUnit.SECONDS);
         // 3.3 返回token
-        return Result.ok();
+        return Result.ok(token);
     }
 
     /**
@@ -98,10 +103,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     private void checkCode(String code, String phone) {
         // 从redis中获取code
         String cacheCode = stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
-        if (Objects.isNull(code)) {
+        if (StringUtils.isBlank(code)) {
             throw new BusinessException("验证码不能为空");
         }
-        if (StringUtils.isNotBlank(code) || !Objects.equals(code, cacheCode)) {
+        if (!Objects.equals(code, cacheCode)) {
             throw new BusinessException("验证码错误");
         }
     }
