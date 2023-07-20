@@ -1,8 +1,10 @@
 package com.hmdp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.dto.LoginFormDTO;
 import com.hmdp.dto.Result;
@@ -18,11 +20,11 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.hmdp.common.RedisConstants.LOGIN_CODE_KEY;
-import static com.hmdp.common.RedisConstants.LOGIN_CODE_TTL;
+import static com.hmdp.common.RedisConstants.*;
 import static com.hmdp.common.SystemConstants.USER_NICK_NAME_PREFIX;
 import static com.hmdp.common.UserConstant.*;
 
@@ -60,7 +62,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     public Result login(LoginFormDTO loginForm, HttpSession session) {
         checkPhone(loginForm.getPhone());
         // 验证验证码
-        checkCode(loginForm.getCode(), session);
+        checkCode(loginForm.getCode(), loginForm.getPhone());
         // 根据手机号查询用户
         QueryWrapper<User> qw = new QueryWrapper<>();
         qw.eq(STR_PHONE, loginForm.getPhone());
@@ -70,8 +72,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             // 3.1 不存在 注册用户
             user = createNewUser(loginForm.getPhone());
         }
-        // 3.2 存在 保存到session
-        session.setAttribute("user", BeanUtil.copyProperties(user, UserDTO.class));
+        // 3.2 存在 保存到redis
+        // 3.2.1 生成token
+        String token = UUID.randomUUID().toString(true);
+        // 3.2.2 转成hash
+        UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+        Map<String, Object> hashUser = BeanUtil.beanToMap(userDTO);
+        // 3.2.3 保存到redis
+        redisTemplate.opsForHash().putAll(LOGIN_USER_KEY + token, hashUser);
+        // 3.2.4 设置过期时间
+        redisTemplate.expire(LOGIN_USER_KEY + token, LOGIN_USER_TTL, TimeUnit.MINUTES);
+        // 3.3 返回token
         return Result.ok();
     }
 
@@ -84,12 +95,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
-    private void checkCode(String code, HttpSession session) {
-        Object cacheCode = session.getAttribute(STR_CODE);
+    private void checkCode(String code, String phone) {
+        // 从redis中获取code
+        String cacheCode = redisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
         if (Objects.isNull(code)) {
             throw new BusinessException("验证码不能为空");
         }
-        if (Objects.isNull(cacheCode) || !Objects.equals(code, cacheCode)) {
+        if (StringUtils.isNotBlank(code) || !Objects.equals(code, cacheCode)) {
             throw new BusinessException("验证码错误");
         }
     }
