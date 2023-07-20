@@ -13,12 +13,16 @@ import com.hmdp.mapper.UserMapper;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.RegexUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
+import static com.hmdp.common.RedisConstants.LOGIN_CODE_KEY;
+import static com.hmdp.common.RedisConstants.LOGIN_CODE_TTL;
 import static com.hmdp.common.SystemConstants.USER_NICK_NAME_PREFIX;
 import static com.hmdp.common.UserConstant.*;
 
@@ -27,7 +31,6 @@ import static com.hmdp.common.UserConstant.*;
  * 服务实现类
  * </p>
  *
- * 
  * @since 2021-12-22
  */
 @Slf4j
@@ -37,14 +40,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Resource
     private UserMapper userMapper;
 
+    @Resource
+    private StringRedisTemplate redisTemplate;
+
     @Override
     public Result sendCode(String phone, HttpSession session) {
         // 校验手机号
         checkPhone(phone);
         // 生成验证码
         String code = RandomUtil.randomNumbers(6);
-        // 保存验证码到session
-        session.setAttribute(STR_CODE, code);
+        // 保存验证码到redis
+        redisTemplate.opsForValue().set(LOGIN_CODE_KEY + phone, code, LOGIN_CODE_TTL, TimeUnit.MINUTES);
         // 发送验证码
         log.info("发送验证码：{}", code);
         return Result.ok();
@@ -72,13 +78,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     /**
      * 校验手机号
      */
-    private void checkPhone (String phone) {
-        if (RegexUtils.isPhoneInvalid(phone) ) {
+    private void checkPhone(String phone) {
+        if (RegexUtils.isPhoneInvalid(phone)) {
             throw new BusinessException("手机号格式不正确");
         }
     }
 
-    private void checkCode (String code, HttpSession session) {
+    private void checkCode(String code, HttpSession session) {
         Object cacheCode = session.getAttribute(STR_CODE);
         if (Objects.isNull(code)) {
             throw new BusinessException("验证码不能为空");
