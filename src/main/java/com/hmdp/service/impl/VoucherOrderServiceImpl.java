@@ -9,7 +9,6 @@ import com.hmdp.mapper.VoucherOrderMapper;
 import com.hmdp.service.ISeckillVoucherService;
 import com.hmdp.service.IVoucherOrderService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.hmdp.service.IVoucherService;
 import com.hmdp.utils.GlobalIDGenerator;
 import com.hmdp.utils.UserHolder;
 import org.springframework.stereotype.Service;
@@ -25,6 +24,7 @@ import java.util.Objects;
  * </p>
  *
  * 
+ * @author zx065
  * @since 2021-12-22
  */
 @Service
@@ -42,8 +42,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         // 查询优惠券id
         SeckillVoucher voucher = seckillVoucherService.getById(voucherId);
         checkVoucher(voucher);
-        // 减少库存
-        boolean update = seckillVoucherService.update().setSql("stock = stock - 1").eq("id", voucherId).update();
+        // 减少库存 乐观锁 stock >0 解决超卖
+        boolean update = seckillVoucherService.update().setSql("stock = stock - 1").eq("voucher_id", voucherId).gt("stock", 0).update();
         if (!update) {
             throw new BusinessException("优惠券已经被抢完了");
         }
@@ -62,7 +62,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             throw new BusinessException("秒杀还未开始");
         }
         // 判断秒杀是否结束了
-        if (LocalDateTime.now().isAfter(voucher.getBeginTime())) {
+        if (LocalDateTime.now().isAfter(voucher.getEndTime())) {
             throw new BusinessException("秒杀已经结束了");
         }
         // 判断库存是否充足
