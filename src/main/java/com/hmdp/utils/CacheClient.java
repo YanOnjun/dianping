@@ -20,6 +20,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
+ * redis设值取值工具类，封装了通过逻辑过期和互斥锁的获取防止缓存击穿缓存穿透的方法
+ * 目前只是redis的string类型的操作
+ *
  * @author : 上春
  * @create 2023/7/26 14:36
  */
