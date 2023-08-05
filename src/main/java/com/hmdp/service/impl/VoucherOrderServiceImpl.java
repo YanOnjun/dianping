@@ -38,7 +38,6 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     private GlobalIDGenerator generator;
 
     @Override
-
     public Result createOrder(Long voucherId) {
         // 查询优惠券id
         SeckillVoucher voucher = seckillVoucherService.getById(voucherId);
