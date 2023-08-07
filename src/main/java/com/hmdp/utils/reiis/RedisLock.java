@@ -4,8 +4,11 @@ import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -19,6 +22,12 @@ public class RedisLock implements ILock{
     private final StringRedisTemplate stringRedisTemplate;
 
     private static final String ID_PREFIX = UUID.randomUUID().toString(true);
+    private static final DefaultRedisScript<Long> UNLOCK_SCRIPT;
+    static {
+        UNLOCK_SCRIPT = new DefaultRedisScript<>();
+        UNLOCK_SCRIPT.setResultType(Long.class);
+        UNLOCK_SCRIPT.setLocation(new ClassPathResource("unlock.lua"));
+    }
 
     public RedisLock(String key, StringRedisTemplate stringRedisTemplate) {
         this.key = key;
@@ -36,14 +45,8 @@ public class RedisLock implements ILock{
 
     @Override
     public void unlock() {
-        String threadId = getThreadId();
-        // TODO 下面两步非原子
-        String s = stringRedisTemplate.opsForValue().get(key);
-        if (StrUtil.equals(threadId, s)){
-            // 从 redis 中获取数据
-            stringRedisTemplate.delete(key);
-        }
-        // 不是当前线程的锁 可能已经超时了
+        // 两步操作采用lua脚本保证原子性
+        stringRedisTemplate.execute(UNLOCK_SCRIPT, Collections.singletonList(key), getThreadId());
     }
 
     private String getThreadId() {
