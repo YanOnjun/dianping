@@ -1,9 +1,5 @@
 package com.hmdp.service.impl;
 
-import cn.hutool.core.util.BooleanUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.hmdp.common.RedisConstants;
 import com.hmdp.dto.Result;
 import com.hmdp.entity.Shop;
@@ -11,14 +7,12 @@ import com.hmdp.exception.BusinessException;
 import com.hmdp.mapper.ShopMapper;
 import com.hmdp.service.IShopService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.hmdp.utils.CacheClient;
-import com.hmdp.utils.RedisData;
+import com.hmdp.utils.reiis.CacheClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.concurrent.*;
 
@@ -42,7 +36,6 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     @Override
     public Shop queryById(Long id) {
         Shop shop = cacheClient.queryByIdWithLogicExpire(RedisConstants.CACHE_SHOP_KEY, id, Shop.class, this::getById, RedisConstants.CACHE_SHOP_TTL, TimeUnit.SECONDS);
-//        Shop shop = queryByIdWithLogicExpire(id);
         if (Objects.isNull(shop)) {
             throw new BusinessException("商铺不存在");
         }

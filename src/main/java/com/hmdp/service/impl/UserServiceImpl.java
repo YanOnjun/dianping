@@ -83,6 +83,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 CopyOptions.create().
                         ignoreNullValue().
                         setFieldValueEditor((field, value) -> value.toString()));
+        // TODO 非原子
         // 3.2.3 保存到redis
         stringRedisTemplate.opsForHash().putAll(LOGIN_USER_KEY + token, hashUser);
         // 3.2.4 设置过期时间
