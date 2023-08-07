@@ -1,4 +1,4 @@
-package com.hmdp.utils;
+package com.hmdp.utils.reiis;
 
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
@@ -105,9 +105,11 @@ public class CacheClient {
         // 存在判断是否过期
         RedisData bean = JSONUtil.toBean(json, RedisData.class);
         LocalDateTime expireTime = bean.getExpireTime();
+        String lockKey = RedisConstants.LOCK_SHOP_KEY + id;
+        RedisLock redisLock = new RedisLock(lockKey, stringRedisTemplate);
         if (LocalDateTime.now().isAfter(expireTime)) {
             // 过期了 获取到锁了 进行更新
-            if (tryLock(id)) {
+            if (redisLock.tryLock(RedisConstants.LOCK_SHOP_TTL)) {
                 // doubleCheck
                 json = stringRedisTemplate.opsForValue().get(key);
                 if (StrUtil.isNotBlank(json)) {
@@ -129,7 +131,7 @@ public class CacheClient {
                         throw new BusinessException(e.getMessage());
                     } finally {
                         // 释放锁
-                        unlock(id);
+                        redisLock.unlock();
                     }
                 });
             }
@@ -158,9 +160,11 @@ public class CacheClient {
         }
         // 不存在 嘗試獲取鎖
         T result = null;
+        String lockKey = RedisConstants.LOCK_SHOP_KEY + id;
+        RedisLock lock = new RedisLock(lockKey, stringRedisTemplate);
         try {
             // 通过互斥锁方式防止缓存击穿
-            boolean isLock = tryLock(id);
+            boolean isLock = lock.tryLock(RedisConstants.LOCK_SHOP_TTL);
             if (!isLock) {
                 // 沒獲取到 重試 会造成线程的阻塞
                 Thread.sleep(50);
@@ -186,22 +190,10 @@ public class CacheClient {
             throw new RuntimeException(e);
         } finally {
             // 释放锁
-            unlock(id);
+            lock.unlock();
         }
         return result;
     }
 
-    private boolean tryLock(Long id) {
-        String key = RedisConstants.LOCK_SHOP_KEY + id;
-        // 从 redis 中获取数据
-        Boolean flag = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", RedisConstants.LOCK_SHOP_TTL, TimeUnit.SECONDS);
-        // 存在直接返回
-        return BooleanUtil.isTrue(flag);
-    }
 
-    private void unlock(Long id) {
-        String key = RedisConstants.LOCK_SHOP_KEY + id;
-        // 从 redis 中获取数据
-        stringRedisTemplate.delete(key);
-    }
 }

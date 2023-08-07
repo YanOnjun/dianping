@@ -11,13 +11,18 @@ import com.hmdp.service.IVoucherOrderService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.utils.GlobalIDGenerator;
 import com.hmdp.utils.UserHolder;
+import com.hmdp.utils.reiis.RedisLock;
 import org.springframework.aop.framework.AopContext;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.Objects;
+
+import static com.hmdp.common.RedisConstants.LOCK_ORDER_VOUCHER_KEY;
+import static com.hmdp.common.RedisConstants.LOCK_ORDER_VOUCHER_TTL;
 
 /**
  * <p>
@@ -37,16 +42,27 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     @Resource
     private GlobalIDGenerator generator;
 
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
     @Override
     public Result createOrder(Long voucherId) {
         // 查询优惠券id
         SeckillVoucher voucher = seckillVoucherService.getById(voucherId);
         checkVoucher(voucher);
         Long id = UserHolder.getUser().getId();
-        // 獲取代理對象對執行方法加鎖 string.intern 保證字符串内容相同加上鎖
-        synchronized (id.toString().intern()) {
+        // 獲取代理對象對執行方法加鎖 锁的范围是用户id 同一个用户不允许多次下单 string.intern 保證字符串内容相同加上鎖
+        RedisLock redisLock = new RedisLock(LOCK_ORDER_VOUCHER_KEY + id, stringRedisTemplate);
+        boolean isLock = redisLock.tryLock(LOCK_ORDER_VOUCHER_TTL);
+        if (!isLock){
+            // 没有获取锁
+            throw new BusinessException("请勿重复下单");
+        }
+        try {
             IVoucherOrderService o = (IVoucherOrderService) AopContext.currentProxy();
             return o.realCreateOrder(voucherId);
+        } finally {
+            redisLock.unlock();
         }
     }
 
