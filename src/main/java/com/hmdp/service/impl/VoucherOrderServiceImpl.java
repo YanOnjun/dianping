@@ -1,7 +1,7 @@
 package com.hmdp.service.impl;
 
-import com.hmdp.dto.Result;
-import com.hmdp.dto.UserDTO;
+import com.hmdp.entity.dto.Result;
+import com.hmdp.entity.dto.UserDTO;
 import com.hmdp.entity.SeckillVoucher;
 import com.hmdp.entity.VoucherOrder;
 import com.hmdp.exception.BusinessException;
@@ -9,9 +9,9 @@ import com.hmdp.mapper.VoucherOrderMapper;
 import com.hmdp.service.ISeckillVoucherService;
 import com.hmdp.service.IVoucherOrderService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.hmdp.utils.GlobalIDGenerator;
-import com.hmdp.utils.UserHolder;
-import com.hmdp.utils.reiis.RedisLock;
+import com.hmdp.common.utils.GlobalIDGenerator;
+import com.hmdp.common.utils.UserHolder;
+import com.hmdp.common.redis.RedisLock;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -21,8 +21,8 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-import static com.hmdp.common.RedisConstants.LOCK_ORDER_VOUCHER_KEY;
-import static com.hmdp.common.RedisConstants.LOCK_ORDER_VOUCHER_TTL;
+import static com.hmdp.common.constant.RedisConstants.LOCK_ORDER_VOUCHER_KEY;
+import static com.hmdp.common.constant.RedisConstants.LOCK_ORDER_VOUCHER_TTL;
 
 /**
  * <p>

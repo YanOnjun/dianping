@@ -1,4 +1,4 @@
-package com.hmdp.common;
+package com.hmdp.common.constant;
 
 public class RedisConstants {
     // 用于存储验证码的key

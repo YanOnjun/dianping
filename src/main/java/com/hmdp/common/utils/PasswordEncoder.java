@@ -1,4 +1,4 @@
-package com.hmdp.utils;
+package com.hmdp.common.utils;
 
 
 import cn.hutool.core.util.RandomUtil;

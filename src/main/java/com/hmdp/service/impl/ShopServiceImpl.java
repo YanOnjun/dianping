@@ -1,13 +1,13 @@
 package com.hmdp.service.impl;
 
-import com.hmdp.common.RedisConstants;
-import com.hmdp.dto.Result;
+import com.hmdp.common.constant.RedisConstants;
+import com.hmdp.entity.dto.Result;
 import com.hmdp.entity.Shop;
 import com.hmdp.exception.BusinessException;
 import com.hmdp.mapper.ShopMapper;
 import com.hmdp.service.IShopService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.hmdp.utils.reiis.CacheClient;
+import com.hmdp.common.redis.CacheClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

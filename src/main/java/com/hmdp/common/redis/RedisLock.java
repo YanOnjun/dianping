@@ -1,4 +1,4 @@
-package com.hmdp.utils.reiis;
+package com.hmdp.common.redis;
 
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.BooleanUtil;

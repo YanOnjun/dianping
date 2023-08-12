@@ -1,10 +1,9 @@
-package com.hmdp.utils.reiis;
+package com.hmdp.common.redis;
 
-import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.hmdp.common.RedisConstants;
+import com.hmdp.common.constant.RedisConstants;
 import com.hmdp.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;

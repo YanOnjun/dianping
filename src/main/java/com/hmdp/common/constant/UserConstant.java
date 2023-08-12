@@ -1,4 +1,4 @@
-package com.hmdp.common;
+package com.hmdp.common.constant;
 
 /**
  * @author : 上春

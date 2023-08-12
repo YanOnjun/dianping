@@ -7,14 +7,14 @@ import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.hmdp.dto.LoginFormDTO;
-import com.hmdp.dto.Result;
-import com.hmdp.dto.UserDTO;
+import com.hmdp.entity.dto.LoginFormDTO;
+import com.hmdp.entity.dto.Result;
+import com.hmdp.entity.dto.UserDTO;
 import com.hmdp.entity.User;
 import com.hmdp.exception.BusinessException;
 import com.hmdp.mapper.UserMapper;
 import com.hmdp.service.IUserService;
-import com.hmdp.utils.RegexUtils;
+import com.hmdp.common.utils.RegexUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -26,9 +26,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.hmdp.common.RedisConstants.*;
-import static com.hmdp.common.SystemConstants.USER_NICK_NAME_PREFIX;
-import static com.hmdp.common.UserConstant.*;
+import static com.hmdp.common.constant.RedisConstants.*;
+import static com.hmdp.common.constant.SystemConstants.USER_NICK_NAME_PREFIX;
+import static com.hmdp.common.constant.UserConstant.*;
 
 /**
  * <p>

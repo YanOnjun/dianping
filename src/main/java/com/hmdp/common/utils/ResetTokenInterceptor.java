@@ -1,9 +1,9 @@
-package com.hmdp.utils;
+package com.hmdp.common.utils;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import com.hmdp.common.RedisConstants;
-import com.hmdp.dto.UserDTO;
+import com.hmdp.common.constant.RedisConstants;
+import com.hmdp.entity.dto.UserDTO;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.hmdp.common.RedisConstants.LOGIN_USER_TTL;
+import static com.hmdp.common.constant.RedisConstants.LOGIN_USER_TTL;
 
 /**
  * 重新设置用户token过期时间

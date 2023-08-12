@@ -1,4 +1,4 @@
-package com.hmdp.utils.reiis;
+package com.hmdp.common.redis;
 
 /**
  * @author : 上春

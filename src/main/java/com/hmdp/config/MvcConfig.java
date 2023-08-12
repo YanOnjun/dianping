@@ -1,8 +1,8 @@
 package com.hmdp.config;
 
-import com.hmdp.dto.UserDTO;
-import com.hmdp.utils.ResetTokenInterceptor;
-import com.hmdp.utils.UserHolder;
+import com.hmdp.entity.dto.UserDTO;
+import com.hmdp.common.utils.ResetTokenInterceptor;
+import com.hmdp.common.utils.UserHolder;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.HandlerInterceptor;

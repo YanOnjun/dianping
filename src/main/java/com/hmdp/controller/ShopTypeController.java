@@ -1,8 +1,8 @@
 package com.hmdp.controller;
 
 import cn.hutool.json.JSONUtil;
-import com.hmdp.common.RedisConstants;
-import com.hmdp.dto.Result;
+import com.hmdp.common.constant.RedisConstants;
+import com.hmdp.entity.dto.Result;
 import com.hmdp.entity.ShopType;
 import com.hmdp.service.IShopTypeService;
 import org.springframework.data.redis.core.StringRedisTemplate;
