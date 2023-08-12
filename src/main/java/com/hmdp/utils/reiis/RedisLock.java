@@ -2,14 +2,11 @@ package com.hmdp.utils.reiis;
 
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.BooleanUtil;
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author : 上春
@@ -21,12 +18,19 @@ public class RedisLock implements ILock{
 
     private final StringRedisTemplate stringRedisTemplate;
 
+    private long timeout;
+
     private static final String ID_PREFIX = UUID.randomUUID().toString(true);
+
+    private static final DefaultRedisScript<Boolean> LOCK_SCRIPT;
     private static final DefaultRedisScript<Long> UNLOCK_SCRIPT;
     static {
+        LOCK_SCRIPT = new DefaultRedisScript<>();
+        LOCK_SCRIPT.setResultType(Boolean.class);
+        LOCK_SCRIPT.setLocation(new ClassPathResource("lua/lock.lua"));
         UNLOCK_SCRIPT = new DefaultRedisScript<>();
         UNLOCK_SCRIPT.setResultType(Long.class);
-        UNLOCK_SCRIPT.setLocation(new ClassPathResource("unlock.lua"));
+        UNLOCK_SCRIPT.setLocation(new ClassPathResource("lua/unlock.lua"));
     }
 
     public RedisLock(String key, StringRedisTemplate stringRedisTemplate) {
@@ -36,9 +40,11 @@ public class RedisLock implements ILock{
 
     @Override
     public boolean tryLock(long timeout) {
+        this.timeout = timeout;
         String threadId = getThreadId();
+        Boolean flag = stringRedisTemplate.execute(LOCK_SCRIPT, Collections.singletonList(key), threadId, String.valueOf(timeout));
         // 互斥设置值
-        Boolean flag = stringRedisTemplate.opsForValue().setIfAbsent(key, threadId, timeout, TimeUnit.SECONDS);
+//        Boolean flag = stringRedisTemplate.opsForValue().setIfAbsent(key, threadId, timeout, TimeUnit.SECONDS);
         // 存在直接返回
         return BooleanUtil.isTrue(flag);
     }
@@ -46,7 +52,7 @@ public class RedisLock implements ILock{
     @Override
     public void unlock() {
         // 两步操作采用lua脚本保证原子性
-        stringRedisTemplate.execute(UNLOCK_SCRIPT, Collections.singletonList(key), getThreadId());
+        stringRedisTemplate.execute(UNLOCK_SCRIPT, Collections.singletonList(key), getThreadId(), String.valueOf(timeout));
     }
 
     private String getThreadId() {
